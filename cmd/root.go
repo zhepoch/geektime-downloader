@@ -36,6 +36,8 @@ var (
 	gcess            string
 	concurrency      int
 	downloadFolder   string
+	productID        string
+	downloadAll      bool
 	sp               *spinner.Spinner
 	currentProduct   geektime.Product
 	quality          string
@@ -57,6 +59,8 @@ func init() {
 	rootCmd.Flags().BoolVar(&downloadComments, "comments", true, "是否需要专栏的第一页评论")
 	rootCmd.Flags().BoolVar(&university, "university", false, "是否下载训练营的内容")
 	rootCmd.Flags().IntVar(&columnOutputType, "output", 1, "专栏的输出内容(1pdf,2markdown,4audio)可自由组合")
+	rootCmd.Flags().StringVarP(&productID, "productID", "p", "", "填写production ID")
+	rootCmd.Flags().BoolVar(&downloadAll, "download_all", true, "是否下载所有专栏或视频")
 
 	rootCmd.MarkFlagsMutuallyExclusive("phone", "gcid")
 	rootCmd.MarkFlagsMutuallyExclusive("phone", "gcess")
@@ -123,26 +127,32 @@ var rootCmd = &cobra.Command{
 }
 
 func selectProduct(ctx context.Context) {
-	prompt := promptui.Prompt{
-		Label: "请输入课程 ID",
-		Validate: func(s string) error {
-			if strings.TrimSpace(s) == "" {
-				return errors.New("课程 ID 不能为空")
-			}
-			if _, err := strconv.Atoi(s); err != nil {
-				return errors.New("课程 ID 格式不合法")
-			}
-			return nil
-		},
-		HideEntered: true,
+	if productID == "" {
+		prompt := promptui.Prompt{
+			Label: "请输入课程 ID",
+			Validate: func(s string) error {
+				if strings.TrimSpace(s) == "" {
+					return errors.New("课程 ID 不能为空")
+				}
+				if _, err := strconv.Atoi(s); err != nil {
+					return errors.New("课程 ID 格式不合法")
+				}
+				return nil
+			},
+			HideEntered: true,
+		}
+		s, err := prompt.Run()
+		checkError(err)
+		productID = s
 	}
-	s, err := prompt.Run()
-	checkError(err)
-
 	// ignore, because checked before
-	id, _ := strconv.Atoi(s)
+	id, _ := strconv.Atoi(productID)
 	loadProduct(ctx, id)
 
+	if downloadAll {
+		handleDownloadAll(ctx)
+		return
+	}
 	productOps(ctx)
 }
 
@@ -329,6 +339,10 @@ func handleDownloadAll(ctx context.Context) {
 				checkError(err)
 			}
 		}
+	}
+	if productID != "" {
+		fmt.Println("下载完成，正在退出.")
+		return
 	}
 	selectProduct(ctx)
 }
