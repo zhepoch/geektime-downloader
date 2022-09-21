@@ -127,7 +127,8 @@ var rootCmd = &cobra.Command{
 }
 
 func selectProduct(ctx context.Context) {
-	if productID == "" {
+	sproduct := productID
+	if sproduct == "" {
 		prompt := promptui.Prompt{
 			Label: "请输入课程 ID",
 			Validate: func(s string) error {
@@ -143,10 +144,10 @@ func selectProduct(ctx context.Context) {
 		}
 		s, err := prompt.Run()
 		checkError(err)
-		productID = s
+		sproduct = s
 	}
 	// ignore, because checked before
-	id, _ := strconv.Atoi(productID)
+	id, _ := strconv.Atoi(sproduct)
 	loadProduct(ctx, id)
 
 	if downloadAll {
