@@ -44,6 +44,8 @@ var (
 	downloadComments bool
 	university       bool
 	columnOutputType int
+	debug            bool
+	proxy            string
 )
 
 func init() {
@@ -61,6 +63,8 @@ func init() {
 	rootCmd.Flags().IntVar(&columnOutputType, "output", 1, "专栏的输出内容(1pdf,2markdown,4audio)可自由组合")
 	rootCmd.Flags().StringVarP(&productID, "productID", "p", "", "填写production ID")
 	rootCmd.Flags().BoolVar(&downloadAll, "download_all", true, "是否下载所有专栏或视频")
+	rootCmd.Flags().BoolVar(&debug, "debug", false, "是否开启debug")
+	rootCmd.Flags().StringVar(&proxy, "proxy", "", "设置代理")
 
 	rootCmd.MarkFlagsMutuallyExclusive("phone", "gcid")
 	rootCmd.MarkFlagsMutuallyExclusive("phone", "gcess")
@@ -259,7 +263,16 @@ func handleDownloadAll(ctx context.Context) {
 		var cancel context.CancelFunc
 
 		if columnOutputType&1 == 1 {
-			chromedpCtx, cancel = chromedp.NewContext(ctx)
+			opts := chromedp.DefaultExecAllocatorOptions[:]
+			if proxy != "" {
+				opts = append(opts, chromedp.ProxyServer(proxy))
+			}
+			if debug {
+				opts = append(opts, chromedp.Flag("headless", false))
+			}
+			ctx1, cancel1 := chromedp.NewExecAllocator(ctx, opts...)
+			defer cancel1()
+			chromedpCtx, cancel = chromedp.NewContext(ctx1)
 			// start the browser
 			err := chromedp.Run(chromedpCtx)
 			checkError(err)
@@ -393,7 +406,16 @@ func downloadArticle(ctx context.Context, article geektime.Article, projectDir s
 		sp.Start()
 
 		if columnOutputType&1 == 1 {
-			chromedpCtx, cancel := chromedp.NewContext(ctx)
+			opts := chromedp.DefaultExecAllocatorOptions[:]
+			if proxy != "" {
+				opts = append(opts, chromedp.ProxyServer(proxy))
+			}
+			if debug {
+				opts = append(opts, chromedp.Flag("headless", false))
+			}
+			ctx1, cancel1 := chromedp.NewExecAllocator(ctx, opts...)
+			defer cancel1()
+			chromedpCtx, cancel := chromedp.NewContext(ctx1)
 			// start the browser
 			err := chromedp.Run(chromedpCtx)
 			checkError(err)

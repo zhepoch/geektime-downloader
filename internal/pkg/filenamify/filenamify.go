@@ -34,12 +34,10 @@ func Filenamify(str string) string {
 	str = reRelativePathRegex.ReplaceAllString(str, Replacement)
 
 	// for repeat
-	if len(Replacement) > 0 {
-		str = trimRepeated(str, Replacement)
+	str = trimRepeated(str, Replacement)
 
-		if len(str) > 1 {
-			str = stripOuter(str, Replacement)
-		}
+	if len(str) > 1 {
+		str = stripOuter(str, Replacement)
 	}
 
 	// for windows names
